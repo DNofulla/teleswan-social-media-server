@@ -3,8 +3,6 @@ const router = Router();
 const bcrypt = require("bcryptjs");
 const User = require("../schema/User");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
-const transporter = require("../services/emailTransporter");
 
 // Finding sessions from mongo store (future use)
 // let session = mongoose.connection.db
@@ -25,8 +23,41 @@ const isAuth = (req, res, next) => {
   This is for testing purposes only.
 */
 router.get("/", async (req, res) => {
-  res.send({ message: "GET All Users!", users: await User.find({}) });
+  res
+    .status(400)
+    .send({ message: "INVALID ENDPOINT! Do NOT use this endpoint!" });
 }); // localhost:8080/users/
+
+// localhost:8080/users/:username
+router.get("/:username", async (req, res) => {
+  const username = req.params.username;
+
+  if (!username) {
+    return res
+      .status(400)
+      .send({ message: "No username sent!", exists: false });
+  }
+
+  const user = await User.findOne({
+    username: username.toLowerCase(),
+  });
+
+  if (!user) {
+    return res
+      .status(400)
+      .send({
+        message: "No account with this username exists!",
+        exists: false,
+      });
+  } else {
+    return res.status(200).send({
+      exists: true,
+      user: {
+        username: user.username,
+      },
+    });
+  }
+});
 
 // localhost:8080/users/login
 router.post("/login", async (req, res) => {
@@ -62,6 +93,10 @@ router.post("/login", async (req, res) => {
           username: user.username,
           displayName: user.displayName,
           email: user.email,
+          biography: user.biography,
+          followers: user.followers,
+          following: user.following,
+          viewers: user.viewers,
           sessionID: req.sessionID,
         };
 
@@ -137,6 +172,10 @@ router.post("/register", async (req, res) => {
       displayName: reqUser.username,
       email: reqUser.email.toLowerCase(),
       password: hashedPassword,
+      biography: "Hello! I am a new TeleSwan User!",
+      followers: [],
+      following: [],
+      viewers: [],
     });
     await newUser.save();
     res.status(200).send({ message: "Success!" });
