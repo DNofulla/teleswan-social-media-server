@@ -5,6 +5,7 @@ const port = process.env.PORT | 8080;
 const cors = require("cors");
 const mongoose = require("mongoose");
 const usersRoute = require("./routes/User");
+const postsRoute = require("./routes/Post");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 
@@ -62,6 +63,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/users", usersRoute);
+
+app.use("/posts", postsRoute);
 
 app.listen(port, () => {
   console.log(`TeleSwan Back End Server running at Port ${port}!`);
