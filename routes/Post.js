@@ -1,10 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const Post = require("../schema/Post");
-const isAuth = require("../util/isAuth");
 const User = require("../schema/User");
-
-router.use(isAuth);
 
 // Create post
 router.post("/new", async (req, res) => {
@@ -39,7 +36,7 @@ router.post("/new", async (req, res) => {
 
     const updated_user = await User.findOneAndUpdate(
       { username: user.username.toLowerCase() },
-      { posts: [...user.posts, newPost._id] }
+      { posts: [...user.posts, newPost._id] },
     );
 
     // Set Session to updated User without password
@@ -98,7 +95,7 @@ router.patch("/like/:post_id", async (req, res) => {
         { _id: post_id },
         user.disliked_posts.includes(post_id)
           ? { dislikes: post.dislikes - 1, likes: post.likes + 1 }
-          : { likes: post.likes + 1 }
+          : { likes: post.likes + 1 },
       );
 
       let index_of_post = user.disliked_posts.includes(post_id)
@@ -116,7 +113,7 @@ router.patch("/like/:post_id", async (req, res) => {
               disliked_posts: new_posts,
               liked_posts: [...user.liked_posts, post_id],
             }
-          : { liked_posts: [...user.liked_posts, post_id] }
+          : { liked_posts: [...user.liked_posts, post_id] },
       );
 
       // Set Session to updated User without password
@@ -174,7 +171,7 @@ router.patch("/dislike/:post_id", async (req, res) => {
         { _id: post_id },
         user.liked_posts.includes(post_id)
           ? { dislikes: post.dislikes + 1, likes: post.likes - 1 }
-          : { dislikes: post.dislikes + 1 }
+          : { dislikes: post.dislikes + 1 },
       );
 
       let index_of_post = user.liked_posts.includes(post_id)
@@ -192,7 +189,7 @@ router.patch("/dislike/:post_id", async (req, res) => {
               liked_posts: new_posts,
               disliked_posts: [...user.disliked_posts, post_id],
             }
-          : { disliked_posts: [...user.disliked_posts, post_id] }
+          : { disliked_posts: [...user.disliked_posts, post_id] },
       );
 
       // Set Session to updated User without password
@@ -274,7 +271,7 @@ router.delete("/delete/:post_id", async (req, res) => {
       liked_index || disliked_index
         ? await User.updateOne(
             { username: doc_user.username },
-            { liked_posts: liked_posts, disliked_posts: disliked_posts }
+            { liked_posts: liked_posts, disliked_posts: disliked_posts },
           )
         : null;
     }

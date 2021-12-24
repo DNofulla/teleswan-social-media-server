@@ -2,7 +2,7 @@ const { Router } = require("express");
 const router = Router();
 const bcrypt = require("bcryptjs");
 const User = require("../schema/User");
-const isAuth = require("../util/isAuth");
+const passport = require("passport");
 
 // Finding sessions from mongo store (future use)
 // let session = mongoose.connection.db
@@ -54,59 +54,14 @@ router.get("/:username", async (req, res) => {
 });
 
 // localhost:8080/users/login
-router.post("/login", async (req, res) => {
-  try {
-    const reqUser = req.body;
+router.post("/login", passport.authenticate("local"), (req, res) => {
+  console.log("user login");
 
-    if (!reqUser.username || !reqUser.password) {
-      return res.status(400).send({ message: "Empty Fields!" });
-    }
+  let sessionID = req.sessionID;
+  let session = req.session;
+  session["sessionID"] = sessionID;
 
-    const user = await User.findOne({
-      username: reqUser.username.toLowerCase(),
-    });
-
-    if (!user) {
-      return res
-        .status(400)
-        .send({ message: "No account with this username exists!" });
-    }
-
-    const isMatch = await bcrypt.compare(reqUser.password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).send({ message: "Invalid Password!" });
-    }
-
-    if (req.session.isAuth) {
-      return res.json(req.session);
-    } else {
-      if (await bcrypt.compare(reqUser.password, user.password)) {
-        req.session.isAuth = true;
-        req.session.user = {
-          username: user.username,
-          displayName: user.displayName,
-          email: user.email,
-          biography: user.biography,
-          followers: user.followers,
-          following: user.following,
-          viewers: user.viewers,
-          profile_image: user.profile_image,
-          pronouns: user.pronouns,
-          posts: user.posts,
-          sessionID: user.sessionID,
-          liked_posts: user.liked_posts,
-          disliked_posts: user.disliked_posts,
-        };
-
-        res.status(200).send(req.session);
-      } else {
-        return res.status(400).send({ message: "Invalid Password!" });
-      }
-    }
-  } catch (message) {
-    res.status(500).send({ message: message.message });
-  }
+  res.status(200).json(session);
 });
 
 // localhost:8080/users/register
@@ -119,7 +74,7 @@ router.post("/register", async (req, res) => {
 
     if (
       !/^[a-zA-Z0-9._][^~`!@#$%^&*()\-+={}\[ \];:'"<|>,/?]{4,24}$/.test(
-        reqUser.username.toLowerCase()
+        reqUser.username.toLowerCase(),
       )
     ) {
       return res.status(400).send({
@@ -129,7 +84,7 @@ router.post("/register", async (req, res) => {
 
     if (
       !/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
-        reqUser.email
+        reqUser.email,
       )
     ) {
       return res.status(400).send({ message: "Please enter a valid email!" });
@@ -137,7 +92,7 @@ router.post("/register", async (req, res) => {
 
     if (
       !/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[~`!@#$%^&*()_\-+={}\[ \];:'"<|>,./?])(?=.*[a-zA-Z]).{8,24}$/.test(
-        reqUser.password
+        reqUser.password,
       )
     ) {
       return res.status(400).send({
@@ -195,17 +150,13 @@ router.post("/register", async (req, res) => {
 
 // Logging out and destroying session: localhost:8080/users/logout
 router.delete("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) throw err;
-    req.session = null;
-  });
+  req.session.destroy();
+  req.logout();
 
   res.status(200).send({
     message: `User Session has been destroyed!`,
   });
 });
-
-router.use(isAuth); // uses authentication middleware for all functions below
 
 router.put("/edit_profile", async (req, res) => {
   try {
@@ -232,7 +183,7 @@ router.put("/edit_profile", async (req, res) => {
 
     const isMatch = await bcrypt.compare(
       oldPassword,
-      userExistsUsername.password
+      userExistsUsername.password,
     );
 
     if (!isMatch) {
@@ -246,7 +197,7 @@ router.put("/edit_profile", async (req, res) => {
     const updatedUser = await User.findOneAndUpdate(
       { username: sessionUser.username.toLowerCase() },
       newUser,
-      { returnOriginal: false }
+      { returnOriginal: false },
     );
 
     req.session.destroy((err) => {
