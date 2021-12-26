@@ -12,7 +12,6 @@ passport.deserializeUser(async (username, done) => {
     const user = await User.findOne({
       username: username.toLowerCase(),
     });
-    console.log("LOG 2");
 
     if (!user) {
       return done({ message: "No account with this username exists!" }, false);
@@ -20,7 +19,6 @@ passport.deserializeUser(async (username, done) => {
       //     .status(400)
       //     .send({ message: "No account with this username exists!" });
     }
-    console.log("LOG 3");
 
     return done(null, {
       username: user.username,
@@ -37,8 +35,6 @@ passport.deserializeUser(async (username, done) => {
       disliked_posts: user.disliked_posts,
     });
   } catch (message) {
-    console.log("LOG 4");
-
     return done({ message: "No account with this username exists!" }, false);
   }
 });
@@ -46,23 +42,16 @@ passport.deserializeUser(async (username, done) => {
 passport.use(
   new LocalStrategy(async (username, password, done) => {
     try {
-      console.log("LOG 5");
-
       if (!username || !password) {
         return done({ message: "Empty Fields!" }, false);
         // return res.status(400).send({ message: "Empty Fields!" });
       }
 
-      console.log("LOG 6");
-
       const user = await User.findOne({
         username: username.toLowerCase(),
       });
-      console.log("LOG 7");
 
       if (!user) {
-        console.log("LOG 8");
-
         return done(
           { message: "No account with this username exists!" },
           false,
@@ -73,15 +62,11 @@ passport.use(
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
-      console.log("LOG 9");
 
       if (!isMatch) {
-        console.log("LOG 10");
-
         return done({ message: "Invalid Password!" }, false);
         // return res.status(400).send({ message: "Invalid Password!" });
       }
-      console.log("LOG 11");
 
       return done(null, {
         username: user.username,

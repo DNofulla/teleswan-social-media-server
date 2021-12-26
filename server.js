@@ -29,7 +29,7 @@ mongoose.connect(
 const store = new MongoDBStore({
   uri: process.env.MONGO_CONNECTION_STRING,
   collection: "sessions",
-  expires: 1000 * 20,
+  expires: 1000 * 60 * 60 * 24 * 14,
 });
 store.on("error", (error) => console.log(error));
 
@@ -39,10 +39,10 @@ app.use(express.text());
 
 app.use(
   session({
-    secret: "XDDDDDDDDDDD",
+    secret: process.env.SECRET,
     cookie: {
       // maxAge: 1 * 365 * 24 * 60 * 60 * 1000, // 1 Year
-      maxAge: 1000 * 20,
+      maxAge: 1000 * 60 * 60 * 24 * 14, // 14 Days
     },
     saveUninitialized: false,
     resave: false,
