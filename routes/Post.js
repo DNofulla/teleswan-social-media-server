@@ -2,9 +2,10 @@ const { Router } = require("express");
 const router = Router();
 const Post = require("../schema/Post");
 const User = require("../schema/User");
+const isAuth = require("../util/auth");
 
 // Create post
-router.post("/new", async (req, res) => {
+router.post("/new", isAuth, async (req, res) => {
   try {
     let reqPost = req.body;
 
@@ -74,7 +75,7 @@ router.post("/new", async (req, res) => {
 });
 
 // Like post by post id
-router.patch("/like/:post_id", async (req, res) => {
+router.patch("/like/:post_id", isAuth, async (req, res) => {
   try {
     let post_id = req.params.post_id;
 
@@ -150,7 +151,7 @@ router.patch("/like/:post_id", async (req, res) => {
 });
 
 // Dislike post by post id
-router.patch("/dislike/:post_id", async (req, res) => {
+router.patch("/dislike/:post_id", isAuth, async (req, res) => {
   try {
     let post_id = req.params.post_id;
 
@@ -226,7 +227,7 @@ router.patch("/dislike/:post_id", async (req, res) => {
 });
 
 // Delete post by post id
-router.delete("/delete/:post_id", async (req, res) => {
+router.delete("/delete/:post_id", isAuth, async (req, res) => {
   try {
     let post_id = req.params.post_id;
 

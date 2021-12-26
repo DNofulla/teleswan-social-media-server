@@ -3,6 +3,7 @@ const router = Router();
 const bcrypt = require("bcryptjs");
 const User = require("../schema/User");
 const passport = require("passport");
+const isAuth = require("../util/auth");
 
 // Finding sessions from mongo store (future use)
 // let session = mongoose.connection.db
@@ -158,7 +159,7 @@ router.delete("/logout", (req, res) => {
   });
 });
 
-router.put("/edit_profile", async (req, res) => {
+router.put("/edit_profile", isAuth, async (req, res) => {
   try {
     let sessionUser = req.session.user;
 

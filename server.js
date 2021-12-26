@@ -66,6 +66,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.get("/", (req, res) => {
+  console.log(req.session);
   res.send({
     message: "Welcome to the TeleSwan Back End REST API!",
   });
