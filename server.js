@@ -52,13 +52,15 @@ app.use(
 
 app.use(
   cors({
-    origin: "*",
+    origin: "http://localhost:3000",
     allowedHeaders: ["Authorization", "Origin", "Content-Type", "Accept"],
+    credentials: true,
   }),
 );
 
 app.use((req, res, next) => {
   console.log(`${req.method} - ${req.url}`);
+  console.log(req.user);
   next();
 });
 
@@ -66,7 +68,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.get("/", (req, res) => {
-  console.log(req.session);
   res.send({
     message: "Welcome to the TeleSwan Back End REST API!",
   });

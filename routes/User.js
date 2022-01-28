@@ -151,7 +151,7 @@ router.post("/register", async (req, res) => {
 
 // Logging out and destroying session: localhost:8080/users/logout
 router.delete("/logout", (req, res) => {
-  req.session.destroy();
+  // req.session.destroy();
   req.logout();
 
   res.status(200).send({
@@ -161,13 +161,63 @@ router.delete("/logout", (req, res) => {
 
 router.put("/edit_profile", isAuth, async (req, res) => {
   try {
-    let sessionUser = req.session.user;
-
-    let newUser = req.body.newUser;
-    let oldPassword = req.body.oldPassword;
+    let newUser = req.body.user;
 
     const userExistsUsername = await User.findOne({
-      username: sessionUser.username.toLowerCase(),
+      username: newUser.username.toLowerCase(),
+    });
+
+    if (!userExistsUsername) {
+      return res
+        .status(400)
+        .send({ message: "Account with this username does not exist." });
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { username: newUser.username.toLowerCase() },
+      newUser,
+      { returnOriginal: false },
+    );
+
+    req.session.passport.user = {
+      username: updatedUser.username,
+      displayName: updatedUser.displayName,
+      email: updatedUser.email,
+      biography: updatedUser.biography,
+      followers: updatedUser.followers,
+      following: updatedUser.following,
+      viewers: updatedUser.viewers,
+      profile_image: updatedUser.profile_image,
+      pronouns: updatedUser.pronouns,
+      posts: updatedUser.posts,
+      sessionID: updatedUser.sessionID,
+      liked_posts: updatedUser.liked_posts,
+      disliked_posts: updatedUser.disliked_posts,
+    };
+
+    let sessionID = req.sessionID;
+    let session = req.session;
+    session["sessionID"] = sessionID;
+
+    res.status(200).json(session);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+router.put("/update_credentials", isAuth, async (req, res) => {
+  try {
+    let oldUsername = req.body.username.old;
+    let oldPassword = req.body.password.old;
+    let oldEmail = req.body.email.old;
+
+    let newUsername = req.body.username.new;
+    let newPassword = req.body.password.new;
+    let newEmail = req.body.email.new;
+
+    const userExistsUsername = await User.findOne({
+      username: oldUsername.toLowerCase(),
     });
 
     if (!userExistsUsername) {
@@ -187,29 +237,25 @@ router.put("/edit_profile", isAuth, async (req, res) => {
       userExistsUsername.password,
     );
 
+    let newUser;
+
     if (!isMatch) {
       return res.status(400).send({ message: "Invalid Password!" });
     } else {
       const bcryptSalt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(newUser.password, bcryptSalt);
+      const hashedPassword = await bcrypt.hash(newPassword, bcryptSalt);
       newUser.password = hashedPassword;
+      newUser.username = newUsername;
+      newUser.email = newEmail;
     }
 
     const updatedUser = await User.findOneAndUpdate(
-      { username: sessionUser.username.toLowerCase() },
+      { username: oldUsername.toLowerCase() },
       newUser,
       { returnOriginal: false },
     );
 
-    req.session.destroy((err) => {
-      if (err) throw err;
-      req.session = null;
-    });
-
-    req.session.regenerate();
-
-    req.session.isAuth = true;
-    req.session.user = {
+    req.session.passport.user = {
       username: updatedUser.username,
       displayName: updatedUser.displayName,
       email: updatedUser.email,
@@ -225,11 +271,17 @@ router.put("/edit_profile", isAuth, async (req, res) => {
       disliked_posts: updatedUser.disliked_posts,
     };
 
-    res.status(200).send(req.session);
+    let sessionID = req.sessionID;
+    let session = req.session;
+    session["sessionID"] = sessionID;
+
+    res.status(200).json(session);
   } catch (error) {
     console.log(error.message);
     res.status(500).send({ error: error.message });
   }
 });
+
+router.get("/status");
 
 module.exports = router;
